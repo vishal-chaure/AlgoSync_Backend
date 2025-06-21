@@ -16,10 +16,23 @@ app.use(express.json());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.CORS_ORIGIN] 
-    : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? [process.env.CORS_ORIGIN, 'https://algosyncv1.vercel.app']
+      : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 app.use(cors(corsOptions));
 
