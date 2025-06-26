@@ -6,10 +6,16 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'No build step required'",
+    "build": "echo 'Backend build completed'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["dsa", "algorithms", "coding", "api", "railway"],
+  "keywords": [
+    "dsa",
+    "algorithms",
+    "coding",
+    "api",
+    "railway"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -17,6 +23,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

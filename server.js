@@ -27,7 +27,6 @@ const corsOptions = {
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -40,6 +39,7 @@ app.use(cors(corsOptions));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/notes', require('./routes/notes'));
+app.use('/api/ai', require('./routes/ai'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -64,5 +64,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  // Server started successfully
 }); 
