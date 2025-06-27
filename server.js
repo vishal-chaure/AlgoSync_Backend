@@ -6,9 +6,6 @@ const connectDB = require('./config/db');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // Middleware
@@ -35,6 +32,11 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Connect to database (only in non-serverless environment)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  connectDB();
+}
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/questions', require('./routes/questions'));
@@ -42,12 +44,28 @@ app.use('/api/notes', require('./routes/notes'));
 app.use('/api/ai', require('./routes/ai'));
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    message: 'Server is running', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Check database connection in serverless environment
+    if (process.env.VERCEL) {
+      await connectDB();
+    }
+    
+    res.json({ 
+      message: 'Server is running', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'connected'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Server is running but database connection failed',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'disconnected',
+      error: error.message
+    });
+  }
 });
 
 // Basic route
