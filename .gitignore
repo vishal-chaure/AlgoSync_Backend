@@ -46,6 +46,9 @@ jspm_packages/
 # dotenv environment variables file
 .env
 
+# Vercel
+.vercel
+
 # IDE files
 .vscode/
 .idea/
