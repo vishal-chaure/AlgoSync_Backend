@@ -12,30 +12,58 @@ const app = express();
 app.use(express.json());
 
 // CORS configuration
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     // Allow requests with no origin (like mobile apps or curl requests)
+//     if (!origin) return callback(null, true);
+    
+//     const allowedOrigins = process.env.NODE_ENV === 'production' 
+//       ? [process.env.CORS_ORIGIN, 'https://algosyncv1.vercel.app']
+//       : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+    
+//     if (allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true,
+//   optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+//   // Add these for Safari compatibility
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+//   exposedHeaders: ['Content-Length', 'X-Requested-With'],
+//   maxAge: 86400 // 24 hours
+// };
+
+// app.use(cors(corsOptions));
+
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.CORS_ORIGIN?.replace(/\/$/, ''), 'https://algosyncv1.vercel.app']
+  : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // allow curl, mobile apps, etc.
     
-    const allowedOrigins = process.env.NODE_ENV === 'production' 
-      ? [process.env.CORS_ORIGIN, 'https://algosyncv1.vercel.app']
-      : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    const cleanOrigin = origin.replace(/\/$/, ''); // remove trailing slash
+    if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
+      console.error(`CORS blocked for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
-  // Add these for Safari compatibility
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Length', 'X-Requested-With'],
-  maxAge: 86400 // 24 hours
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+
+// Handle OPTIONS requests globally
+app.options('*', cors(corsOptions));
 
 // Connect to database (only in non-serverless environment)
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
