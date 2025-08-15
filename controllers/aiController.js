@@ -54,9 +54,9 @@ ${content}`;
         contents: [{ parts: [{ text: prompt }] }]
       }
     );
-    
+
     const aiReply = geminiRes.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
+
     // Try to parse the JSON response
     try {
       // Clean the response - remove any markdown formatting
@@ -66,14 +66,14 @@ ${content}`;
       } else if (cleanResponse.startsWith('```')) {
         cleanResponse = cleanResponse.replace(/```\n?/, '').replace(/```\n?/, '');
       }
-      
+
       const parsedData = JSON.parse(cleanResponse);
       res.json(parsedData);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       console.error('Cleaned response:', cleanResponse);
       // If JSON parsing fails, return a structured error
-      res.status(400).json({ 
+      res.status(400).json({
         error: 'Failed to parse AI response',
         rawResponse: aiReply,
         parseError: parseError.message
