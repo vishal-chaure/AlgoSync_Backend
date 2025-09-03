@@ -16,25 +16,21 @@ app.use(express.json());
 
 // ===== CORS configuration =====
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-      ...(process.env.CORS_ORIGIN
-        ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
-        : []),
-      'https://algosyncv1.vercel.app'
-    ]
+  ? process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
+      : ['https://algosyncv1.vercel.app']
   : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
-
-console.log("✅ Allowed origins:", allowedOrigins);
 
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true); // allow curl, mobile apps, etc.
+
     const cleanOrigin = origin.replace(/\/$/, '');
     if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
-      console.warn(`❌ CORS blocked for origin: ${origin}`);
-      callback(null, false); // <-- Don't throw error, just deny
+      console.error(`🚫 CORS blocked for origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
