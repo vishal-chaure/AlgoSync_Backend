@@ -6,7 +6,6 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-
 // Load env vars
 dotenv.config();
 
@@ -17,19 +16,25 @@ app.use(express.json());
 
 // ===== CORS configuration =====
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.CORS_ORIGIN?.replace(/\/$/, ''), 'https://algosyncv1.vercel.app']
+  ? [
+      ...(process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
+        : []),
+      'https://algosyncv1.vercel.app'
+    ]
   : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+
+console.log("✅ Allowed origins:", allowedOrigins);
 
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true); // allow curl, mobile apps, etc.
-    
-    const cleanOrigin = origin.replace(/\/$/, ''); // remove trailing slash
+    const cleanOrigin = origin.replace(/\/$/, '');
     if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
-      console.error(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`❌ CORS blocked for origin: ${origin}`);
+      callback(null, false); // <-- Don't throw error, just deny
     }
   },
   credentials: true,
@@ -38,6 +43,15 @@ const corsOptions = {
   exposedHeaders: ['Content-Length', 'X-Requested-With'],
   optionsSuccessStatus: 200,
 };
+
+// Short-circuit preflight requests early
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
@@ -85,8 +99,8 @@ app.get('/', (req, res) => {
 
 // ===== Error handling middleware =====
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error("🔥 Error:", err.message);
+  res.status(500).json({ message: err.message || 'Something went wrong!' });
 });
 
 // ===== Export for Vercel or start server locally =====
@@ -95,6 +109,6 @@ module.exports = app;
 if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
   });
 }
