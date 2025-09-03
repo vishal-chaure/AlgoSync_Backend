@@ -17,9 +17,11 @@ app.use(express.json());
 // ===== CORS configuration =====
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
-      : ['https://algosyncv1.vercel.app']
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
+    : ['https://algosyncv1.vercel.app']
   : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+
+console.log("Allowed origins:", allowedOrigins);
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -70,15 +72,15 @@ app.get('/api/health', async (req, res) => {
     if (process.env.VERCEL) {
       await connectDB();
     }
-    
-    res.json({ 
-      message: 'Server is running', 
+
+    res.json({
+      message: 'Server is running',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
       database: 'connected'
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Server is running but database connection failed',
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'development',
