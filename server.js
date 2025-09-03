@@ -15,43 +15,66 @@ const app = express();
 app.use(express.json());
 
 // ===== CORS configuration =====
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
-    : ['https://algosyncv1.vercel.app']
-  : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+const allowedOrigins = [
+  "https://algosyncv1.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:8080",
+  "http://localhost:8081"
+];
 
-console.log("Allowed origins:", allowedOrigins);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow curl/postman
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      console.log("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow curl, mobile apps, etc.
+// Optional: make sure OPTIONS preflight works
+app.options("*", cors());
+// const allowedOrigins = process.env.NODE_ENV === 'production'
+//   ? process.env.CORS_ORIGIN
+//     ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/$/, ''))
+//     : ['https://algosyncv1.vercel.app']
+//   : ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
 
-    const cleanOrigin = origin.replace(/\/$/, '');
-    if (allowedOrigins.includes(cleanOrigin)) {
-      callback(null, true);
-    } else {
-      console.error(`🚫 CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Length', 'X-Requested-With'],
-  optionsSuccessStatus: 200,
-};
+// console.log("Allowed origins:", allowedOrigins);
 
-// Short-circuit preflight requests early
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true); // allow curl, mobile apps, etc.
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+//     const cleanOrigin = origin.replace(/\/$/, '');
+//     if (allowedOrigins.includes(cleanOrigin)) {
+//       callback(null, true);
+//     } else {
+//       console.error(`🚫 CORS blocked for origin: ${origin}`);
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+//   exposedHeaders: ['Content-Length', 'X-Requested-With'],
+//   optionsSuccessStatus: 200,
+// };
+
+// // Short-circuit preflight requests early
+// app.use((req, res, next) => {
+//   if (req.method === 'OPTIONS') {
+//     return res.sendStatus(200);
+//   }
+//   next();
+// });
+
+// app.use(cors(corsOptions));
+// app.options('*', cors(corsOptions));
 
 // ===== Database connection (skip on Vercel) =====
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
